@@ -9,6 +9,11 @@ import { CheckoutPage } from '../pages/CheckoutPage';
 import { InternetLoginFlow }    from '../flows/internet/InternetLoginFlow';
 import { InternetCheckboxFlows } from '../flows/internet/InternetCheckboxFlows';
 import { InternetDropdownFlows } from '../flows/internet/InternetDropdownFlows';
+import { InternetJSAlertsFlows } from '../flows/internet/InternetJSAlertsFlows';
+import { InternetWindowsPageFlows } from '../flows/internet/InternetWindowPageFlows';
+import { InternetFileUploadPageFlows } from '../flows/internet/InternetFileUploadPageFlows';
+import { InternetNetworkInterceptionFlow } from '../flows/internet/InternetNetworkInterceptionFlow';
+
 
 // ─── Fixture type definitions ─────────────────────────────────
 
@@ -31,6 +36,10 @@ type InternetFlows = {
   login : InternetLoginFlow;
   checkbox : InternetCheckboxFlows;
   dropDownBox : InternetDropdownFlows;
+  JSAlert : InternetJSAlertsFlows;
+  newWindowPage : InternetWindowsPageFlows;
+  fileUploadPage : InternetFileUploadPageFlows;
+  networkInterception: InternetNetworkInterceptionFlow; 
 };
 
 type MyFixtures = {
@@ -68,11 +77,16 @@ export const test = base.extend<MyFixtures>({
     });
   },
 
-  internetFlows: async ({page}, use) =>{
+  internetFlows: async ({page, context}, use) =>{
     await use({
       login : new InternetLoginFlow(page),
       checkbox : new InternetCheckboxFlows(page),
-      dropDownBox : new InternetDropdownFlows(page)
+      dropDownBox : new InternetDropdownFlows(page),
+      JSAlert : new InternetJSAlertsFlows(page),
+      newWindowPage : new InternetWindowsPageFlows(page,context),
+      fileUploadPage: new InternetFileUploadPageFlows(page),
+      networkInterception : new InternetNetworkInterceptionFlow(page),
+      
     });
   },
 
