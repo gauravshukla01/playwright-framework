@@ -1,12 +1,12 @@
 // api/BaseApiClient.ts
 import { APIRequestContext, APIResponse } from '@playwright/test';
-import { ENV } from '../utils/envUtils';
-
+//import { ENV } from '../utils/envUtils';
+import { getENV } from '../utils/envUtils';
 export abstract class BaseApiClient {
   protected readonly baseUrl: string;
   protected readonly request: APIRequestContext;
 
-  constructor(request: APIRequestContext, baseUrl: string = ENV.REQRES_BASE_URL) {
+  constructor(request: APIRequestContext, baseUrl: string = getENV().REQRES_BASE_URL) {
     this.request = request;
     this.baseUrl = baseUrl;
   }
@@ -72,7 +72,7 @@ export abstract class BaseApiClient {
     return {
       'Content-Type':  'application/json',
       'Accept':        'application/json',
-      'x-api-key':     ENV.REQRES_API_KEY,    // ← injected automatically
+      'x-api-key':     getENV().REQRES_API_KEY,    // ← injected automatically
       ...additionalHeaders,
     };
   }
