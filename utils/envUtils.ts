@@ -8,7 +8,7 @@ export function getRequiredEnv(key: string): string {
   if (!value) {
     throw new Error(
       `Missing required environment variable: ${key}\n` +
-      `Set it in your .env file — see .env.example for reference.`,
+        `Set it in your .env file — see .env.example for reference.`,
     );
   }
   return value;
@@ -24,10 +24,34 @@ export function getOptionalEnv(key: string, defaultValue: string): string {
 
 export function getENV() {
   return {
-    REQRES_API_KEY:     getRequiredEnv('REQRES_API_KEY'),
-    REQRES_BASE_URL:    getOptionalEnv('REQRES_BASE_URL', 'https://reqres.in'),
+    REQRES_API_KEY: getRequiredEnv('REQRES_API_KEY'),
+    REQRES_BASE_URL: getOptionalEnv('REQRES_BASE_URL', 'https://reqres.in'),
     BASE_URL_SAUCEDEMO: getOptionalEnv('BASE_URL_SAUCEDEMO', 'https://www.saucedemo.com'),
-    BASE_URL_INTERNET:  getOptionalEnv('BASE_URL_INTERNET', 'https://the-internet.herokuapp.com'),
-    APP:                getOptionalEnv('APP', 'saucedemo'),
+    BASE_URL_INTERNET: getOptionalEnv('BASE_URL_INTERNET', 'https://the-internet.herokuapp.com'),
+    APP: getOptionalEnv('APP', 'saucedemo'),
+
+    // Tuum APIs
+    BASE_URL_AUTH_API: getOptionalEnv(
+      'BASE_URL_AUTH_API',
+      'https://auth-api.cab-dev.tuumplatform.com',
+    ),
+    BASE_URL_PERSON_API: getOptionalEnv(
+      'BASE_URL_PERSON_API',
+      'https://person-api.cab-dev.tuumplatform.com',
+    ),
+    BASE_URL_ACCOUNT_API: getOptionalEnv(
+      'BASE_URL_ACCOUNT_API',
+      'https://account-api.cab-dev.tuumplatform.com',
+    ),
+    BASE_URL_FINANCE_API: getOptionalEnv(
+      'BASE_URL_FINANCE_API',
+      'https://finance-api.cab-dev.tuumplatform.com',
+    ),
+
+    TUUM_TENANT_CODE: getOptionalEnv('TUUM_TENANT_CODE', 'CA.CAGM'),
+    TUUM_CHANNEL_CODE: getOptionalEnv('TUUM_CHANNEL_CODE', 'SYSTEM'),
+
+    TUUM_EMPLOYEE_USERNAME: getRequiredEnv('TUUM_EMPLOYEE_USERNAME'),
+    TUUM_EMPLOYEE_PASSWORD: getRequiredEnv('TUUM_EMPLOYEE_PASSWORD'),
   };
 }

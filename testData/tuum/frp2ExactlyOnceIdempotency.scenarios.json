@@ -1,0 +1,48 @@
+[
+  {
+    "id": "FRP2-TC1-DEBIT",
+    "description": "FRP2 TC1: Duplicate debit transaction is not posted twice (same x-request-id, referenceNumber, uniqueIdentifier)",
+    "accountId": "ID-1048",
+    "transaction": {
+      "transactionTypeCode": "EXT_WITHDRAWAL",
+      "transactionSubtypeCode": "",
+      "money": {
+        "amount": 100,
+        "currencyCode": "USD"
+      },
+      "details": "Generic debit transaction",
+      "source": {
+        "sourceName": "CARD_CREDIT"
+      },
+      "paymentServiceProviderCode": "TUUM",
+      "reversedTransactionId": null,
+      "labels": ["ACC_VIRTUAL"]
+    },
+    "expected": {
+      "directionCode": "OUT"
+    }
+  },
+  {
+    "id": "FRP2-TC1-CREDIT",
+    "description": "FRP2 TC1: Duplicate credit transaction is not posted twice (same x-request-id, referenceNumber, uniqueIdentifier)",
+    "accountId": "ID-1048",
+    "transaction": {
+      "transactionTypeCode": "EXT_DEPOSIT",
+      "transactionSubtypeCode": "",
+      "money": {
+        "amount": 300,
+        "currencyCode": "USD"
+      },
+      "details": "custom credit transaction",
+      "source": {
+        "sourceName": "CARD_CREDIT"
+      },
+      "paymentServiceProviderCode": "TUUM",
+      "reversedTransactionId": null,
+      "labels": ["ACC_VIRTUAL"]
+    },
+    "expected": {
+      "directionCode": "IN"
+    }
+  }
+]

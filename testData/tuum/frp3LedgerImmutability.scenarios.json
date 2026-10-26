@@ -1,0 +1,76 @@
+[
+  {
+    "id": "FRP3-TC1-DEBIT",
+    "description": "FRP3 TC1: Reversal of a debit (withdrawal) via API creates an equal and opposite linked offsetting entry (without fee)",
+    "accountId": "ID-1048",
+    "transaction": {
+      "transactionTypeCode": "EXT_WITHDRAWAL",
+      "transactionSubtypeCode": "",
+      "money": {
+        "amount": 100,
+        "currencyCode": "USD"
+      },
+      "details": "Generic debit transaction",
+      "source": {
+        "sourceName": "CARD_DEBIT"
+      },
+      "paymentServiceProviderCode": "TUUM",
+      "reversedTransactionId": null,
+      "labels": ["ACC_VIRTUAL"]
+    },
+    "reversal": {
+      "transactionTypeCode": "EXT_WITHDRAWAL_R"
+    },
+    "expected": {
+      "directionCode": "OUT",
+      "reversalDirectionCode": "IN",
+      "ledger": {
+        "original": {
+          "debit": { "accountCode": "2014000", "accountName": "Customer Accounts" },
+          "credit": { "accountCode": "2022000", "accountName": "Payments clearing/transit" }
+        },
+        "reversal": {
+          "debit": { "accountCode": "2022000", "accountName": "Payments clearing/transit" },
+          "credit": { "accountCode": "2014000", "accountName": "Customer Accounts" }
+        }
+      }
+    }
+  },
+  {
+    "id": "FRP3-TC1-CREDIT",
+    "description": "FRP3 TC1 (credit variation): Reversal of a credit (deposit) via API creates an equal and opposite linked offsetting entry (without fee)",
+    "accountId": "ID-1048",
+    "transaction": {
+      "transactionTypeCode": "EXT_DEPOSIT",
+      "transactionSubtypeCode": "",
+      "money": {
+        "amount": 300,
+        "currencyCode": "USD"
+      },
+      "details": "Generic credit transaction",
+      "source": {
+        "sourceName": "CARD_CREDIT"
+      },
+      "paymentServiceProviderCode": "TUUM",
+      "reversedTransactionId": null,
+      "labels": ["ACC_VIRTUAL"]
+    },
+    "reversal": {
+      "transactionTypeCode": "EXT_DEPOSIT_R"
+    },
+    "expected": {
+      "directionCode": "IN",
+      "reversalDirectionCode": "OUT",
+      "ledger": {
+        "original": {
+          "debit": { "accountCode": "2022000", "accountName": "Payments clearing/transit" },
+          "credit": { "accountCode": "2014000", "accountName": "Customer Accounts" }
+        },
+        "reversal": {
+          "debit": { "accountCode": "2014000", "accountName": "Customer Accounts" },
+          "credit": { "accountCode": "2022000", "accountName": "Payments clearing/transit" }
+        }
+      }
+    }
+  }
+]

@@ -30,11 +30,12 @@
     "node": true,
     "es2020": true
   },
- "ignorePatterns": [
-  "node_modules/",
-  "playwright-report/",
-  "test-results/",
-  "allure-results/",
-  "allure-report/"
-]
+  "ignorePatterns": [
+    "node_modules/",
+    "playwright-report/",
+    "test-results/",
+    "allure-results/",
+    "allure-report/",
+    "dist/"
+  ]
 }

@@ -1,0 +1,1511 @@
+[
+  {
+    "id": "FIFO-100",
+    "description": "FIFO check — 100 near-simultaneous deposits on a dedicated test account",
+    "accountId": "ID-1086",
+    "gapMs": 100,
+    "valueDate": "2026-11-06",
+    "transactions": [
+      {
+        "details": "FIFO-TEST-1",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 101,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-2",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 102,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-3",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 103,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-4",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 104,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-5",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 105,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-6",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 106,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-7",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 107,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-8",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 108,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-9",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 109,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-10",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 110,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-11",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 111,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-12",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 112,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-13",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 113,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-14",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 114,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-15",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 115,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-16",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 116,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-17",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 117,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-18",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 118,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-19",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 119,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-20",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 120,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-21",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 121,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-22",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 122,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-23",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 123,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-24",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 124,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-25",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 125,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-26",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 126,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-27",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 127,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-28",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 128,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-29",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 129,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-30",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 130,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-31",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 131,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-32",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 132,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-33",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 133,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-34",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 134,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-35",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 135,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-36",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 136,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-37",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 137,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-38",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 138,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-39",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 139,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-40",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 140,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-41",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 141,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-42",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 142,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-43",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 143,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-44",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 144,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-45",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 145,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-46",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 146,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-47",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 147,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-48",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 148,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-49",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 149,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-50",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 150,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-51",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 151,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-52",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 152,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-53",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 153,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-54",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 154,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-55",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 155,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-56",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 156,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-57",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 157,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-58",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 158,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-59",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 159,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-60",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 160,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-61",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 161,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-62",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 162,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-63",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 163,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-64",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 164,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-65",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 165,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-66",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 166,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-67",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 167,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-68",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 168,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-69",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 169,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-70",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 170,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-71",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 171,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-72",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 172,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-73",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 173,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-74",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 174,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-75",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 175,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-76",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 176,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-77",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 177,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-78",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 178,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-79",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 179,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-80",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 180,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-81",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 181,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-82",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 182,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-83",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 183,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-84",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 184,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-85",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 185,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-86",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 186,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-87",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 187,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-88",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 188,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-89",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 189,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-90",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 190,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-91",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 191,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-92",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 192,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-93",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 193,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-94",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 194,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-95",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 195,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-96",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 196,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-97",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 197,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-98",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 198,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-99",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 199,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      },
+      {
+        "details": "FIFO-TEST-100",
+        "transactionTypeCode": "EXT_DEPOSIT",
+        "money": {
+          "amount": 200,
+          "currencyCode": "USD"
+        },
+        "source": {
+          "sourceName": "CARD_CREDIT",
+          "sourceRef": "ID-181262"
+        },
+        "paymentServiceProviderCode": "TUUM",
+        "labels": ["ACC_VIRTUAL"],
+        "applyFee": false
+      }
+    ]
+  }
+]

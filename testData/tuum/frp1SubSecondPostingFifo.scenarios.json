@@ -1,0 +1,46 @@
+[
+  {
+    "id": "FRP1-TC1",
+    "description": "FRP1 TC1: Single debit posting reflecting ledger details with sub-second latency",
+    "personId": "ID-1076",
+    "accountId": "ID-1048",
+    "transaction": {
+      "transactionTypeCode": "EXT_WITHDRAWAL",
+      "money": {
+        "amount": 100,
+        "currencyCode": "USD"
+      },
+      "details": "Generic debit transaction",
+      "source": {
+        "sourceName": "CARD_CREDIT"
+      },
+      "paymentServiceProviderCode": "TUUM",
+      "labels": ["ACC_VIRTUAL"]
+    },
+    "expected": {
+      "directionCode": "OUT"
+    }
+  },
+  {
+    "id": "FRP1-TC2",
+    "description": "FRP1 TC2: Single credit posting reflecting ledger details with sub-second latency",
+    "personId": "ID-1076",
+    "accountId": "ID-1048",
+    "transaction": {
+      "transactionTypeCode": "EXT_DEPOSIT",
+      "money": {
+        "amount": 300,
+        "currencyCode": "USD"
+      },
+      "details": "Generic credit transaction",
+      "source": {
+        "sourceName": "CARD_CREDIT"
+      },
+      "paymentServiceProviderCode": "TUUM",
+      "labels": ["ACC_VIRTUAL"]
+    },
+    "expected": {
+      "directionCode": "IN"
+    }
+  }
+]

@@ -1,0 +1,49 @@
+[
+  {
+    "id": "FRP2-TC2",
+    "description": "FRP2 TC2: New transactions with a unique x-request-id (and fresh referenceNumber / uniqueIdentifier) are posted successfully",
+    "accountId": "ID-1048",
+    "transactions": [
+      {
+        "transaction": {
+          "transactionTypeCode": "EXT_DEPOSIT",
+          "transactionSubtypeCode": "",
+          "money": {
+            "amount": 300,
+            "currencyCode": "USD"
+          },
+          "details": "custom credit transaction",
+          "source": {
+            "sourceName": "CARD_CREDIT"
+          },
+          "paymentServiceProviderCode": "TUUM",
+          "reversedTransactionId": null,
+          "labels": ["ACC_VIRTUAL"]
+        },
+        "expected": {
+          "directionCode": "IN"
+        }
+      },
+      {
+        "transaction": {
+          "transactionTypeCode": "EXT_WITHDRAWAL",
+          "transactionSubtypeCode": "",
+          "money": {
+            "amount": 100,
+            "currencyCode": "USD"
+          },
+          "details": "Generic debit transaction",
+          "source": {
+            "sourceName": "CARD_CREDIT"
+          },
+          "paymentServiceProviderCode": "TUUM",
+          "reversedTransactionId": null,
+          "labels": ["ACC_VIRTUAL"]
+        },
+        "expected": {
+          "directionCode": "OUT"
+        }
+      }
+    ]
+  }
+]

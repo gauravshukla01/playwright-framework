@@ -13,10 +13,7 @@ export abstract class BaseApiClient {
 
   // ─── Core HTTP methods ────────────────────────────────────
 
-  protected async get(
-    endpoint: string,
-    headers?: Record<string, string>,
-  ): Promise<APIResponse> {
+  protected async get(endpoint: string, headers?: Record<string, string>): Promise<APIResponse> {
     return this.request.get(`${this.baseUrl}${endpoint}`, {
       headers: this.buildHeaders(headers),
     });
@@ -28,7 +25,7 @@ export abstract class BaseApiClient {
     headers?: Record<string, string>,
   ): Promise<APIResponse> {
     return this.request.post(`${this.baseUrl}${endpoint}`, {
-      data:    body,
+      data: body,
       headers: this.buildHeaders(headers),
     });
   }
@@ -39,15 +36,12 @@ export abstract class BaseApiClient {
     headers?: Record<string, string>,
   ): Promise<APIResponse> {
     return this.request.put(`${this.baseUrl}${endpoint}`, {
-      data:    body,
+      data: body,
       headers: this.buildHeaders(headers),
     });
   }
 
-  protected async delete(
-    endpoint: string,
-    headers?: Record<string, string>,
-  ): Promise<APIResponse> {
+  protected async delete(endpoint: string, headers?: Record<string, string>): Promise<APIResponse> {
     return this.request.delete(`${this.baseUrl}${endpoint}`, {
       headers: this.buildHeaders(headers),
     });
@@ -66,14 +60,18 @@ export abstract class BaseApiClient {
 
   // ─── Header builder ───────────────────────────────────────
 
-  private buildHeaders(
-    additionalHeaders?: Record<string, string>,
-  ): Record<string, string> {
+  private buildHeaders(additionalHeaders?: Record<string, string>): Record<string, string> {
     return {
-      'Content-Type':  'application/json',
-      'Accept':        'application/json',
-      'x-api-key':     getENV().REQRES_API_KEY,    // ← injected automatically
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      ...this.getDefaultHeaders(),
       ...additionalHeaders,
     };
+  }
+
+  // Override in a subclass to change the headers injected on every request
+  // (e.g. a different service's auth scheme). Defaults to reqres's x-api-key.
+  protected getDefaultHeaders(): Record<string, string> {
+    return { 'x-api-key': getENV().REQRES_API_KEY };
   }
 }

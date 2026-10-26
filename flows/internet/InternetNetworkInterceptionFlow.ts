@@ -12,7 +12,7 @@ export class InternetNetworkInterceptionFlow {
 
   async fulfillWithMockedResponse(): Promise<void> {
     // intercept the CSS and inject a custom background colour
-    await this.page.route('**/*.css', async route => {
+    await this.page.route('**/*.css', async (route) => {
       const response = await route.fetch();
       const originalCSS = await response.text();
       const modifiedCSS = originalCSS + '\n body { background-color: red !important; }';
@@ -26,7 +26,7 @@ export class InternetNetworkInterceptionFlow {
 
   async abortRequest(): Promise<void> {
     // abort all CSS requests — page loads without styles
-    await this.page.route('**/*.css', route => route.abort());
+    await this.page.route('**/*.css', (route) => route.abort());
 
     await this.networkPage.goToDynamicLoadingPage();
     await this.networkPage.startButton.click();
@@ -37,9 +37,9 @@ export class InternetNetworkInterceptionFlow {
     let intercepted = false;
 
     // observe the request but let it pass through unchanged
-    await this.page.route('**/*.css', route => {
+    await this.page.route('**/*.css', (route) => {
       intercepted = true;
-      route.continue();
+      return route.continue();
     });
 
     await this.networkPage.goToDynamicLoadingPage();

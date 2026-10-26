@@ -1,0 +1,882 @@
+===== Transactions Funds Debit =====
+// =========================================================================
+// Postman Test Script - POST /api/v5/accounts/{accountId}/transactions
+// Paste this into the "Tests" / "Post-response" tab of the request
+//
+// v4: Fixes a stale-variable bug where running multiple create-transaction
+// requests (deposits, withdrawals, reversals) in the same session would
+// overwrite shared variables like "createdAmount", causing a LATER GET
+// request on an EARLIER transaction to compare against the WRONG
+// transaction's data (e.g. "expected EXT_WITHDRAWAL to equal EXT_DEPOSIT").
+//
+// FIX: in addition to the old flat "created*" variables (kept for backward
+// compatibility with the balances/duplicate-replay scripts), this version
+// also stores a per-transaction JSON snapshot keyed by accountTransactionId:
+//     snapshot_<accountTransactionId>
+// The GET-by-ID script looks up its snapshot using the SAME ID it just
+// fetched, so it always compares against the correct original transaction
+// regardless of what else ran in between.
+// =========================================================================
+
+(function () {
+    // Parse response body once
+    let jsonData = pm.response.json();
+
+    // Pull request body for cross-field comparison
+    let requestBody = JSON.parse(pm.request.body.raw);
+
+    // ---------------------------------------------------------------
+    // 1. Status code
+    // ---------------------------------------------------------------
+    pm.test("Status code is 200/201", function () {
+        pm.expect(pm.response.code).to.be.oneOf([200, 201]);
+    });
+
+    // ---------------------------------------------------------------
+    // 2. Top-level error wrappers
+    // ---------------------------------------------------------------
+    pm.test("errors is null", function () {
+        pm.expect(jsonData.errors).to.be.null;
+    });
+
+    pm.test("validationErrors is null", function () {
+        pm.expect(jsonData.validationErrors).to.be.null;
+    });
+
+    pm.test("data array is present and not empty", function () {
+        pm.expect(jsonData.data).to.be.an("array").that.is.not.empty;
+    });
+
+    // Shortcut to the first (and expected only) transaction record
+    let txn = jsonData.data[0];
+
+    // ---------------------------------------------------------------
+    // 3. Identifiers / keys
+    // ---------------------------------------------------------------
+    pm.test("accountTransactionId is present and valid format", function () {
+        pm.expect(txn.accountTransactionId).to.exist;
+        pm.expect(txn.accountTransactionId).to.match(/^ID-\d+$/);
+    });
+
+    pm.test("tenantCode matches request header x-tenant-code", function () {
+        let sentTenant = pm.request.headers.get("x-tenant-code");
+        pm.expect(txn.tenantCode).to.eql(sentTenant);
+    });
+
+    pm.test("groupId is present", function () {
+        pm.expect(txn.groupId).to.exist;
+    });
+
+    pm.test("filingCode is present and matches expected pattern", function () {
+        pm.expect(txn.filingCode).to.exist;
+        pm.expect(txn.filingCode).to.match(/^\d{16}$/);
+    });
+
+    // ---------------------------------------------------------------
+    // 4. Dates
+    // ---------------------------------------------------------------
+    pm.test("postingDate is present and a valid date", function () {
+        pm.expect(txn.postingDate).to.exist;
+        pm.expect(new Date(txn.postingDate).toString()).to.not.eql("Invalid Date");
+    });
+
+    pm.test("valueDate matches request valueDate", function () {
+        pm.expect(txn.valueDate).to.eql(requestBody.valueDate);
+    });
+
+    pm.test("createdDTime is present, valid ISO timestamp, and recent", function () {
+        pm.expect(txn.createdDTime).to.exist;
+        let created = new Date(txn.createdDTime);
+        pm.expect(created.toString()).to.not.eql("Invalid Date");
+
+        let now = new Date();
+        let diffMs = Math.abs(now - created);
+        pm.expect(diffMs).to.be.below(5 * 60 * 1000); // within 5 minutes of test run
+    });
+
+    pm.test("transactionDTime matches request transactionDTime", function () {
+        pm.expect(txn.transactionDTime).to.eql(requestBody.transactionDTime);
+    });
+
+    // ---------------------------------------------------------------
+    // 5. Account / type / direction
+    // ---------------------------------------------------------------
+    pm.test("accountId matches path parameter", function () {
+        let sentAccountId = pm.variables.get("accountId") || pm.collectionVariables.get("accountId");
+        pm.expect(txn.accountId).to.eql(sentAccountId);
+    });
+
+    pm.test("transactionTypeCode matches request", function () {
+        pm.expect(txn.transactionTypeCode).to.eql(requestBody.transactionTypeCode);
+    });
+
+    pm.test("transactionSubtypeCode matches request (empty string treated as null)", function () {
+        let expectedSubtype = requestBody.transactionSubtypeCode === "" ? null : requestBody.transactionSubtypeCode;
+        pm.expect(txn.transactionSubtypeCode).to.eql(expectedSubtype);
+    });
+
+    pm.test("directionCode correctly derived for transaction type", function () {
+        const expectedDirectionMap = {
+            "EXT_WITHDRAWAL": "OUT",
+            "EXT_DEPOSIT": "IN"
+        };
+        let expectedDirection = expectedDirectionMap[requestBody.transactionTypeCode];
+        if (expectedDirection) {
+            pm.expect(txn.directionCode).to.eql(expectedDirection);
+        } else {
+            pm.expect(txn.directionCode).to.be.oneOf(["IN", "OUT"]);
+        }
+    });
+
+    // ---------------------------------------------------------------
+    // 6. Money fields
+    // ---------------------------------------------------------------
+    pm.test("currencyCode matches request money.currencyCode", function () {
+        pm.expect(txn.currencyCode).to.eql(requestBody.money.currencyCode);
+    });
+
+    pm.test("amount matches request money.amount", function () {
+        pm.expect(parseFloat(txn.amount)).to.eql(parseFloat(requestBody.money.amount));
+    });
+
+    pm.test("initialBalanceAmount is present and numeric", function () {
+        pm.expect(txn.initialBalanceAmount).to.exist;
+        pm.expect(typeof txn.initialBalanceAmount).to.eql("number");
+    });
+
+    // ---------------------------------------------------------------
+    // 7. Descriptive fields
+    // ---------------------------------------------------------------
+    pm.test("details matches request details", function () {
+        pm.expect(txn.details).to.eql(requestBody.details);
+    });
+
+    pm.test("referenceNumber matches request referenceNumber", function () {
+        pm.expect(txn.referenceNumber).to.eql(requestBody.referenceNumber);
+    });
+
+    pm.test("uniqueIdentifier matches request uniqueIdentifier", function () {
+        pm.expect(txn.uniqueIdentifier).to.eql(requestBody.uniqueIdentifier);
+    });
+
+    // ---------------------------------------------------------------
+    // 8. Source object
+    // ---------------------------------------------------------------
+    pm.test("source.sourceName matches request", function () {
+        pm.expect(txn.source.sourceName).to.eql(requestBody.source.sourceName);
+    });
+
+    pm.test("source.sourceRef matches request", function () {
+        pm.expect(txn.source.sourceRef).to.eql(requestBody.source.sourceRef);
+    });
+
+    pm.test("source.sourceLink is null", function () {
+        pm.expect(txn.source.sourceLink).to.be.null;
+    });
+
+    // ---------------------------------------------------------------
+    // 9. PSP / reversal / labels
+    // ---------------------------------------------------------------
+    pm.test("paymentServiceProviderCode matches request", function () {
+        pm.expect(txn.paymentServiceProviderCode).to.eql(requestBody.paymentServiceProviderCode);
+    });
+
+    pm.test("reversed is false for a fresh transaction", function () {
+        pm.expect(txn.reversed).to.eql(false);
+    });
+
+    pm.test("reversedTransactionId matches request (null when not a reversal)", function () {
+        pm.expect(txn.reversedTransactionId).to.eql(requestBody.reversedTransactionId);
+    });
+
+    pm.test("labels array matches request labels", function () {
+        pm.expect(txn.labels).to.be.an("array");
+        pm.expect(txn.labels).to.have.members(requestBody.labels);
+    });
+
+    // ---------------------------------------------------------------
+    // 10. Fields expected to remain null when not supplied in request
+    // ---------------------------------------------------------------
+    pm.test("contractSource is null (not sent in request)", function () {
+        pm.expect(txn.contractSource).to.be.null;
+    });
+
+    pm.test("merchantInfo is null (not sent in request)", function () {
+        pm.expect(txn.merchantInfo).to.be.null;
+    });
+
+    pm.test("metaInfo is null (not sent in request)", function () {
+        pm.expect(txn.metaInfo).to.be.null;
+    });
+
+    pm.test("endToEndId is null (not applicable for this flow)", function () {
+        pm.expect(txn.endToEndId).to.be.null;
+    });
+
+    pm.test("virtualAccountId is null (no virtual account linkage expected)", function () {
+        pm.expect(txn.virtualAccountId).to.be.null;
+    });
+
+    pm.test("counterparty is null (not sent in request)", function () {
+        pm.expect(txn.counterparty).to.be.null;
+    });
+
+    pm.test("reservationId is null (no reservation involved)", function () {
+        pm.expect(txn.reservationId).to.be.null;
+    });
+
+    pm.test("usage is null (not sent in request)", function () {
+        pm.expect(txn.usage).to.be.null;
+    });
+
+    pm.test("settlementInfo is null (not sent in request)", function () {
+        pm.expect(txn.settlementInfo).to.be.null;
+    });
+
+    // ---------------------------------------------------------------
+    // 11. Header-level assertion (x-request-id idempotency key)
+    // ---------------------------------------------------------------
+    pm.test("x-request-id header was sent as a valid UUID", function () {
+        let requestId = pm.request.headers.get("x-request-id");
+        pm.expect(requestId).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+    });
+
+    // ---------------------------------------------------------------
+    // 12a. NEW (v4 fix): persist a per-transaction JSON snapshot keyed
+    //      by accountTransactionId. This is what the updated GET-by-ID
+    //      script should look up -- immune to being overwritten by
+    //      OTHER create-transaction requests run later in the session.
+    // ---------------------------------------------------------------
+    let createdSnapshot = {
+        accountId: txn.accountId,
+        valueDate: txn.valueDate,
+        transactionTypeCode: txn.transactionTypeCode,
+        transactionSubtypeCode: txn.transactionSubtypeCode,
+        currencyCode: txn.currencyCode,
+        amount: txn.amount,
+        initialBalanceAmount: txn.initialBalanceAmount,
+        details: txn.details,
+        referenceNumber: txn.referenceNumber,
+        uniqueIdentifier: txn.uniqueIdentifier,
+        paymentServiceProviderCode: txn.paymentServiceProviderCode,
+        transactionDTime: txn.transactionDTime,
+        createdDTime: txn.createdDTime,
+        directionCode: txn.directionCode
+    };
+    pm.collectionVariables.set(
+        "snapshot_" + txn.accountTransactionId,
+        JSON.stringify(createdSnapshot)
+    );
+
+    // ---------------------------------------------------------------
+    // 12b. Keep the OLD flat variables too -- still used by
+    //      balances_response_assertions_iife.txt and
+    //      duplicate_transaction_replay_assertions_iife.txt, which only
+    //      ever care about the MOST RECENT transaction, not a specific
+    //      historical one, so staleness isn't an issue for them.
+    // ---------------------------------------------------------------
+    if (txn && txn.accountTransactionId) {
+        pm.collectionVariables.set("lastAccountTransactionId", txn.accountTransactionId);
+        pm.collectionVariables.set("accountTransactionId", txn.accountTransactionId);
+    }
+
+    pm.collectionVariables.set("createdAccountId", txn.accountId);
+    pm.collectionVariables.set("createdValueDate", txn.valueDate);
+    pm.collectionVariables.set("createdTransactionTypeCode", txn.transactionTypeCode);
+    pm.collectionVariables.set("createdTransactionSubtypeCode", txn.transactionSubtypeCode);
+    pm.collectionVariables.set("createdCurrencyCode", txn.currencyCode);
+    pm.collectionVariables.set("createdAmount", txn.amount);
+    pm.collectionVariables.set("createdInitialBalanceAmount", txn.initialBalanceAmount);
+    pm.collectionVariables.set("createdDetails", txn.details);
+    pm.collectionVariables.set("createdReferenceNumber", txn.referenceNumber);
+    pm.collectionVariables.set("createdUniqueIdentifier", txn.uniqueIdentifier);
+    pm.collectionVariables.set("createdPaymentServiceProviderCode", txn.paymentServiceProviderCode);
+    pm.collectionVariables.set("createdTransactionDTime", txn.transactionDTime);
+    pm.collectionVariables.set("createdCreatedDTime", txn.createdDTime);
+    pm.collectionVariables.set("createdDirectionCode", txn.directionCode);
+
+    // Used by the balances script for cross-endpoint reconciliation
+    pm.collectionVariables.set("lastInitialBalanceAmount", txn.initialBalanceAmount);
+    pm.collectionVariables.set("lastTransactionAmount", txn.amount);
+    pm.collectionVariables.set("lastDirectionCode", txn.directionCode);
+
+    // Used by the duplicate-replay test (Standards #3)
+    pm.collectionVariables.set("lastReferenceNumber", txn.referenceNumber);
+    pm.collectionVariables.set("lastUniqueIdentifier", txn.uniqueIdentifier);
+})();
+
+===== View transaction Details =====
+// =========================================================================
+// Postman Test Script - GET /api/v3/transactions/{accountTransactionId}
+// Paste this into the "Tests" / "Post-response" tab of the request
+//
+// v2: Fixes a stale-variable bug. The old version compared against flat
+// collection variables (createdAmount, createdTransactionTypeCode, etc.)
+// which get OVERWRITTEN every time ANY create-transaction request runs.
+// If you ran a deposit AFTER the withdrawal you're now fetching, those
+// checks would wrongly compare this withdrawal against the deposit's data
+// -- e.g. "expected EXT_WITHDRAWAL to equal EXT_DEPOSIT".
+//
+// FIX: this version looks up a per-transaction JSON snapshot keyed by the
+// SAME accountTransactionId this GET request just fetched:
+//     snapshot_<accountTransactionId>
+// That snapshot is written by create_transaction_assertions_v4_snapshot.txt
+// at creation time and never gets overwritten by other transactions.
+//
+// REQUIRES: the corresponding create request must use
+// create_transaction_assertions_v4_snapshot.txt (or later) so the
+// snapshot_<id> variable actually exists.
+// =========================================================================
+
+(function () {
+    // Parse response body once
+    let jsonData = pm.response.json();
+
+    // ---------------------------------------------------------------
+    // 1. Status code
+    // ---------------------------------------------------------------
+    pm.test("Status code is 200", function () {
+        pm.expect(pm.response.code).to.eql(200);
+    });
+
+    // ---------------------------------------------------------------
+    // 2. Top-level error wrappers
+    // ---------------------------------------------------------------
+    pm.test("errors is null", function () {
+        pm.expect(jsonData.errors).to.be.null;
+    });
+
+    pm.test("validationErrors is null", function () {
+        pm.expect(jsonData.validationErrors).to.be.null;
+    });
+
+    pm.test("data is a single object (not array)", function () {
+        pm.expect(jsonData.data).to.be.an("object");
+        pm.expect(jsonData.data).to.not.be.an("array");
+    });
+
+    // Shortcut to the transaction object
+    let txn = jsonData.data;
+
+    // ---------------------------------------------------------------
+    // 3. Identifiers
+    // ---------------------------------------------------------------
+    pm.test("accountTransactionId matches path parameter", function () {
+        let sentId = pm.variables.get("accountTransactionId") || pm.collectionVariables.get("accountTransactionId");
+        pm.expect(txn.accountTransactionId).to.eql(sentId);
+    });
+
+    pm.test("tenantCode matches request header x-tenant-code", function () {
+        let sentTenant = pm.request.headers.get("x-tenant-code");
+        pm.expect(txn.tenantCode).to.eql(sentTenant);
+    });
+
+    pm.test("groupId is present", function () {
+        pm.expect(txn.groupId).to.exist;
+    });
+
+    pm.test("filingCode is present and matches expected pattern", function () {
+        pm.expect(txn.filingCode).to.exist;
+        pm.expect(txn.filingCode).to.match(/^\d{16}$/);
+    });
+
+    // ---------------------------------------------------------------
+    // 4. Dates
+    // ---------------------------------------------------------------
+    pm.test("postingDate is present and a valid date", function () {
+        pm.expect(txn.postingDate).to.exist;
+        pm.expect(new Date(txn.postingDate).toString()).to.not.eql("Invalid Date");
+    });
+
+    pm.test("createdDTime is present and valid ISO timestamp", function () {
+        pm.expect(txn.createdDTime).to.exist;
+        pm.expect(new Date(txn.createdDTime).toString()).to.not.eql("Invalid Date");
+    });
+
+    // ---------------------------------------------------------------
+    // 5. Business-logic checks
+    // ---------------------------------------------------------------
+    pm.test("directionCode correctly derived for transaction type", function () {
+        const expectedDirectionMap = {
+            "EXT_WITHDRAWAL": "OUT",
+            "EXT_DEPOSIT": "IN"
+        };
+        let expectedDirection = expectedDirectionMap[txn.transactionTypeCode];
+        if (expectedDirection) {
+            pm.expect(txn.directionCode).to.eql(expectedDirection);
+        } else {
+            pm.expect(txn.directionCode).to.be.oneOf(["IN", "OUT"]);
+        }
+    });
+
+    pm.test("currencyCode is a valid 3-letter ISO code", function () {
+        pm.expect(txn.currencyCode).to.match(/^[A-Z]{3}$/);
+    });
+
+    pm.test("amount is present and numeric", function () {
+        pm.expect(typeof txn.amount).to.eql("number");
+    });
+
+    // ---------------------------------------------------------------
+    // 6. Source object
+    // ---------------------------------------------------------------
+    pm.test("source.sourceLink is null", function () {
+        pm.expect(txn.source.sourceLink).to.be.null;
+    });
+
+    pm.test("source.sourceName and sourceRef are present", function () {
+        pm.expect(txn.source.sourceName).to.exist;
+        pm.expect(txn.source.sourceRef).to.exist;
+    });
+
+    // ---------------------------------------------------------------
+    // 7. Fields expected to remain null when not applicable
+    // ---------------------------------------------------------------
+    pm.test("contractSource is null (not applicable)", function () {
+        pm.expect(txn.contractSource).to.be.null;
+    });
+
+    pm.test("merchantInfo is null (not applicable)", function () {
+        pm.expect(txn.merchantInfo).to.be.null;
+    });
+
+    pm.test("metaInfo is null (not applicable)", function () {
+        pm.expect(txn.metaInfo).to.be.null;
+    });
+
+    pm.test("endToEndId is null (not applicable)", function () {
+        pm.expect(txn.endToEndId).to.be.null;
+    });
+
+    pm.test("virtualAccountId is null (no virtual account linkage expected)", function () {
+        pm.expect(txn.virtualAccountId).to.be.null;
+    });
+
+    pm.test("counterparty is null (not applicable)", function () {
+        pm.expect(txn.counterparty).to.be.null;
+    });
+
+    pm.test("reservationId is null (no reservation involved)", function () {
+        pm.expect(txn.reservationId).to.be.null;
+    });
+
+    pm.test("usage is null (not applicable)", function () {
+        pm.expect(txn.usage).to.be.null;
+    });
+
+    pm.test("settlementInfo is null (not applicable)", function () {
+        pm.expect(txn.settlementInfo).to.be.null;
+    });
+
+    // ---------------------------------------------------------------
+    // 8. Reversal-related fields (incl. deprecated-field sync checks)
+    // ---------------------------------------------------------------
+    pm.test("reversed and reversal flags are in sync", function () {
+        pm.expect(txn.reversed).to.eql(txn.reversal);
+    });
+
+    pm.test("reversedTransactionId and deprecated reversalTransactionId are in sync", function () {
+        pm.expect(txn.reversalTransactionId).to.eql(txn.reversedTransactionId);
+    });
+
+    pm.test("reversedByTransactionId is null for a non-reversed transaction", function () {
+        if (txn.reversed === false) {
+            pm.expect(txn.reversedByTransactionId).to.be.null;
+        } else {
+            pm.expect(txn.reversedByTransactionId).to.exist;
+        }
+    });
+
+    // ---------------------------------------------------------------
+    // 9. Custom booking / ISO 20022 classification fields
+    // ---------------------------------------------------------------
+    pm.test("customBookingAllowed is a boolean", function () {
+        pm.expect(typeof txn.customBookingAllowed).to.eql("boolean");
+    });
+
+    pm.test("domainCode, familyCode, subFamilyCode are null or valid 4-letter ISO 20022 codes", function () {
+        [txn.domainCode, txn.familyCode, txn.subFamilyCode].forEach(function (code) {
+            if (code !== null) {
+                pm.expect(code).to.match(/^[A-Z]{4}$/);
+            }
+        });
+    });
+
+    // ---------------------------------------------------------------
+    // 10. FIXED: Equality checks against original POST (create) response
+    //     using the per-transaction snapshot keyed by THIS transaction's
+    //     own ID -- never overwritten by other create requests.
+    // ---------------------------------------------------------------
+    let snapshotRaw = pm.collectionVariables.get("snapshot_" + txn.accountTransactionId);
+
+    if (!snapshotRaw) {
+        pm.test("snapshot exists for this transaction (create script must run first)", function () {
+            pm.expect.fail(
+                "No snapshot_" + txn.accountTransactionId + " variable found. " +
+                "Run the create-transaction request for this transaction using " +
+                "create_transaction_assertions_v4_snapshot.txt before this GET."
+            );
+        });
+    } else {
+        let snap = JSON.parse(snapshotRaw);
+
+        pm.test("valueDate matches original create response", function () {
+            pm.expect(txn.valueDate).to.eql(snap.valueDate);
+        });
+
+        pm.test("transactionTypeCode matches original create response", function () {
+            pm.expect(txn.transactionTypeCode).to.eql(snap.transactionTypeCode);
+        });
+
+        pm.test("transactionSubtypeCode matches original create response", function () {
+            pm.expect(txn.transactionSubtypeCode).to.eql(snap.transactionSubtypeCode);
+        });
+
+        pm.test("currencyCode matches original create response", function () {
+            pm.expect(txn.currencyCode).to.eql(snap.currencyCode);
+        });
+
+        pm.test("amount matches original create response", function () {
+            pm.expect(parseFloat(txn.amount)).to.eql(parseFloat(snap.amount));
+        });
+
+        pm.test("initialBalanceAmount matches original create response", function () {
+            pm.expect(parseFloat(txn.initialBalanceAmount)).to.eql(parseFloat(snap.initialBalanceAmount));
+        });
+
+        pm.test("details matches original create response", function () {
+            pm.expect(txn.details).to.eql(snap.details);
+        });
+
+        pm.test("referenceNumber matches original create response", function () {
+            pm.expect(txn.referenceNumber).to.eql(snap.referenceNumber);
+        });
+
+        pm.test("uniqueIdentifier matches original create response", function () {
+            pm.expect(txn.uniqueIdentifier).to.eql(snap.uniqueIdentifier);
+        });
+
+        pm.test("accountId matches original create response", function () {
+            pm.expect(txn.accountId).to.eql(snap.accountId);
+        });
+
+        pm.test("createdDTime is immutable and matches original create response", function () {
+            pm.expect(txn.createdDTime).to.eql(snap.createdDTime);
+        });
+
+        pm.test("transactionDTime matches original create response", function () {
+            pm.expect(txn.transactionDTime).to.eql(snap.transactionDTime);
+        });
+
+        pm.test("paymentServiceProviderCode matches original create response", function () {
+            pm.expect(txn.paymentServiceProviderCode).to.eql(snap.paymentServiceProviderCode);
+        });
+
+        pm.test("directionCode matches original create response", function () {
+            pm.expect(txn.directionCode).to.eql(snap.directionCode);
+        });
+    }
+})();
+
+===== FetchBalances =====
+// =========================================================================
+// Postman Test Script - GET /api/v1/accounts/{accountId}/balances
+// Paste this into the "Tests" / "Post-response" tab of the request
+// =========================================================================
+
+// Parse response body once
+let jsonData = pm.response.json();
+
+// -------------------------------------------------------------------------
+// 1. Status code
+// -------------------------------------------------------------------------
+pm.test("Status code is 200", function () {
+    pm.expect(pm.response.code).to.eql(200);
+});
+
+// -------------------------------------------------------------------------
+// 2. Top-level error wrappers
+// -------------------------------------------------------------------------
+pm.test("errors is null", function () {
+    pm.expect(jsonData.errors).to.be.null;
+});
+
+pm.test("validationErrors is null", function () {
+    pm.expect(jsonData.validationErrors).to.be.null;
+});
+
+pm.test("data array is present and not empty", function () {
+    pm.expect(jsonData.data).to.be.an("array").that.is.not.empty;
+});
+
+// Shortcut to the first balance record
+let bal = jsonData.data[0];
+
+// -------------------------------------------------------------------------
+// 3. Identifiers
+// -------------------------------------------------------------------------
+pm.test("balanceId is present and valid format", function () {
+    pm.expect(bal.balanceId).to.exist;
+    pm.expect(bal.balanceId).to.match(/^ID-\d+$/);
+});
+
+pm.test("tenantCode matches request header x-tenant-code", function () {
+    let sentTenant = pm.request.headers.get("x-tenant-code");
+    pm.expect(bal.tenantCode).to.eql(sentTenant);
+});
+
+pm.test("accountId matches path parameter", function () {
+    let sentAccountId = pm.variables.get("accountId") || pm.collectionVariables.get("accountId");
+    pm.expect(bal.accountId).to.eql(sentAccountId);
+});
+
+// -------------------------------------------------------------------------
+// 4. Currency fields
+// -------------------------------------------------------------------------
+pm.test("currencyCode is a valid 3-letter ISO code", function () {
+    pm.expect(bal.currencyCode).to.exist;
+    pm.expect(bal.currencyCode).to.match(/^[A-Z]{3}$/);
+});
+
+pm.test("defaultCurrencyCode is a valid 3-letter ISO code", function () {
+    pm.expect(bal.defaultCurrencyCode).to.exist;
+    pm.expect(bal.defaultCurrencyCode).to.match(/^[A-Z]{3}$/);
+});
+
+// -------------------------------------------------------------------------
+// 5. Core amount fields
+// -------------------------------------------------------------------------
+pm.test("balanceAmount is present and numeric", function () {
+    pm.expect(bal.balanceAmount).to.exist;
+    pm.expect(typeof bal.balanceAmount).to.eql("number");
+});
+
+pm.test("reservedAmount is present, numeric, and >= 0", function () {
+    pm.expect(bal.reservedAmount).to.exist;
+    pm.expect(typeof bal.reservedAmount).to.eql("number");
+    pm.expect(bal.reservedAmount).to.be.at.least(0);
+});
+
+pm.test("overdraftLimitAmount is present, numeric, and >= 0", function () {
+    pm.expect(bal.overdraftLimitAmount).to.exist;
+    pm.expect(typeof bal.overdraftLimitAmount).to.eql("number");
+    pm.expect(bal.overdraftLimitAmount).to.be.at.least(0);
+});
+
+// -------------------------------------------------------------------------
+// 6. Derived / business-logic fields (most important checks)
+// -------------------------------------------------------------------------
+pm.test("availableBalanceAmount = balanceAmount - reservedAmount + overdraftLimitAmount", function () {
+    let expectedAvailable = bal.balanceAmount - bal.reservedAmount + bal.overdraftLimitAmount;
+    // Round to 2 decimals to avoid floating point mismatches
+    pm.expect(Math.round(bal.availableBalanceAmount * 100) / 100)
+        .to.eql(Math.round(expectedAvailable * 100) / 100);
+});
+
+pm.test("availableBalanceInDefaultCcy is consistent with currency conversion", function () {
+    pm.expect(bal.availableBalanceInDefaultCcy).to.exist;
+    pm.expect(typeof bal.availableBalanceInDefaultCcy).to.eql("number");
+
+    if (bal.currencyCode === bal.defaultCurrencyCode) {
+        // Same currency -> should equal availableBalanceAmount
+        pm.expect(Math.round(bal.availableBalanceInDefaultCcy * 100) / 100)
+            .to.eql(Math.round(bal.availableBalanceAmount * 100) / 100);
+    } else {
+        // Different currency -> should be a converted, non-equal value
+        pm.expect(bal.availableBalanceInDefaultCcy).to.not.eql(bal.availableBalanceAmount);
+    }
+});
+
+// -------------------------------------------------------------------------
+// 7. Negative balance flag (conditional)
+// -------------------------------------------------------------------------
+pm.test("negativeBalanceStartDate is consistent with balanceAmount sign", function () {
+    if (bal.balanceAmount < 0) {
+        pm.expect(bal.negativeBalanceStartDate).to.exist;
+        pm.expect(new Date(bal.negativeBalanceStartDate).toString()).to.not.eql("Invalid Date");
+    } else {
+        pm.expect(bal.negativeBalanceStartDate).to.be.null;
+    }
+});
+
+// -------------------------------------------------------------------------
+// 8. Optional: cross-endpoint reconciliation with prior transaction response
+// -------------------------------------------------------------------------
+// If a previous transaction test stored "lastInitialBalanceAmount" and
+// "lastTransactionAmount" / "lastDirectionCode" as collection variables,
+// this validates the new balanceAmount reflects that transaction correctly.
+
+let prevInitialBalance = pm.collectionVariables.get("lastInitialBalanceAmount");
+let prevTxnAmount = pm.collectionVariables.get("lastTransactionAmount");
+let prevDirection = pm.collectionVariables.get("lastDirectionCode");
+
+if (prevInitialBalance && prevTxnAmount && prevDirection) {
+    pm.test("balanceAmount reconciles with prior transaction (initialBalance +/- amount)", function () {
+        let expectedBalance = prevDirection === "OUT"
+            ? parseFloat(prevInitialBalance) - parseFloat(prevTxnAmount)
+            : parseFloat(prevInitialBalance) + parseFloat(prevTxnAmount);
+
+        pm.expect(Math.round(bal.balanceAmount * 100) / 100)
+            .to.eql(Math.round(expectedBalance * 100) / 100);
+    });
+}
+
+// -------------------------------------------------------------------------
+// Persist values for potential reuse in subsequent requests
+// -------------------------------------------------------------------------
+pm.collectionVariables.set("lastBalanceId", bal.balanceId);
+pm.collectionVariables.set("lastAvailableBalanceAmount", bal.availableBalanceAmount);
+
+===== Finance event =====
+// =========================================================================
+// Postman Test Script - GET /api/v1/entries/source?sourceName=ACCOUNT_TRANSACTION&sourceRefs={accountTransactionId}
+// Paste this into the "Tests" / "Post-response" tab of the request
+//
+// Wrapped in an IIFE so variables are scoped locally and won't clash with
+// other scripts running in the same execution.
+//
+// This validates the double-entry bookkeeping pair (debit + credit) posted
+// to the finance ledger for a given account-api transaction. Cross-checks
+// against the snapshot_<accountTransactionId> variable set by
+// create_transaction_assertions_v4_snapshot.txt, if available.
+// =========================================================================
+
+(function () {
+    // Parse response body once
+    let jsonData = pm.response.json();
+
+    // ---------------------------------------------------------------
+    // 1. Status code
+    // ---------------------------------------------------------------
+    pm.test("Status code is 200", function () {
+        pm.expect(pm.response.code).to.eql(200);
+    });
+
+    // ---------------------------------------------------------------
+    // 2. Top-level error wrappers
+    // ---------------------------------------------------------------
+    pm.test("errors is null", function () {
+        pm.expect(jsonData.errors).to.be.null;
+    });
+
+    pm.test("validationErrors is null", function () {
+        pm.expect(jsonData.validationErrors).to.be.null;
+    });
+
+    pm.test("data is present and is an array", function () {
+        pm.expect(jsonData.data).to.exist;
+        pm.expect(jsonData.data).to.be.an("array");
+    });
+
+    // ---------------------------------------------------------------
+    // 3. CORE double-entry bookkeeping invariant checks
+    // ---------------------------------------------------------------
+    pm.test("data array has exactly 2 entries (one debit, one credit)", function () {
+        pm.expect(jsonData.data).to.have.lengthOf(2);
+    });
+
+    let entries = jsonData.data;
+    let entryA = entries[0];
+    let entryB = entries[1];
+
+    pm.test("one entry is a debit (D) and the other is a credit (C)", function () {
+        let directions = [entryA.directionCode, entryB.directionCode].sort();
+        pm.expect(directions).to.eql(["C", "D"]);
+    });
+
+    pm.test("both entries have the exact same amount (debit/credit balance)", function () {
+        pm.expect(parseFloat(entryA.amount.amount)).to.eql(parseFloat(entryB.amount.amount));
+    });
+
+    pm.test("both entries have the same currencyCode", function () {
+        pm.expect(entryA.amount.currencyCode).to.eql(entryB.amount.currencyCode);
+    });
+
+    pm.test("accountCode differs between the two entries", function () {
+        pm.expect(entryA.accountCode).to.not.eql(entryB.accountCode);
+    });
+
+    pm.test("entryNumber and eventId are identical across both entries", function () {
+        pm.expect(entryA.entryNumber).to.eql(entryB.entryNumber);
+        pm.expect(entryA.eventId).to.eql(entryB.eventId);
+        pm.expect(entryA.entryNumber).to.eql(entryA.eventId);
+    });
+
+    pm.test("entryDate and createdDtime are identical across both entries", function () {
+        pm.expect(entryA.entryDate).to.eql(entryB.entryDate);
+        pm.expect(entryA.createdDtime).to.eql(entryB.createdDtime);
+    });
+
+    // ---------------------------------------------------------------
+    // 4. Per-entry field checks (looped over both entries)
+    // ---------------------------------------------------------------
+    entries.forEach(function (entry, idx) {
+        pm.test(`entries[${idx}].entryId is present and valid format`, function () {
+            pm.expect(entry.entryId).to.exist;
+            pm.expect(entry.entryId).to.match(/^ID-\d+$/);
+        });
+
+        pm.test(`entries[${idx}].tenantCode matches request header x-tenant-code`, function () {
+            let sentTenant = pm.request.headers.get("x-tenant-code");
+            pm.expect(entry.tenantCode).to.eql(sentTenant);
+        });
+
+        pm.test(`entries[${idx}].accountName is present and non-empty`, function () {
+            pm.expect(entry.accountName).to.exist;
+            pm.expect(entry.accountName).to.be.a("string").that.is.not.empty;
+        });
+
+        pm.test(`entries[${idx}].reportingAmount matches amount when exchange rate is 1`, function () {
+            if (entry.reportingCcyExchangeRate === 1) {
+                pm.expect(parseFloat(entry.reportingAmount.amount)).to.eql(parseFloat(entry.amount.amount));
+                pm.expect(entry.reportingAmount.currencyCode).to.eql(entry.amount.currencyCode);
+            }
+        });
+
+        pm.test(`entries[${idx}].reportingCcyExchangeRate is a number`, function () {
+            pm.expect(typeof entry.reportingCcyExchangeRate).to.eql("number");
+        });
+
+        pm.test(`entries[${idx}].source.sourceName equals the sourceName query parameter sent`, function () {
+            let sentSourceName = pm.request.url.query.get("sourceName");
+            pm.expect(entry.source.sourceName).to.eql(sentSourceName);
+        });
+
+        pm.test(`entries[${idx}].source.sourceRef matches the accountTransactionId queried`, function () {
+            let sentSourceRef = pm.variables.get("accountTransactionId") || pm.collectionVariables.get("accountTransactionId");
+            pm.expect(entry.source.sourceRef).to.eql(sentSourceRef);
+        });
+
+        pm.test(`entries[${idx}].createdDtime is present and a valid ISO timestamp`, function () {
+            pm.expect(entry.createdDtime).to.exist;
+            pm.expect(new Date(entry.createdDtime).toString()).to.not.eql("Invalid Date");
+        });
+    });
+
+    // ---------------------------------------------------------------
+    // 5. Cross-reference check against the original transaction's
+    //    snapshot (if the create script ran with snapshot support)
+    // ---------------------------------------------------------------
+    let sentAccountTransactionId = pm.variables.get("accountTransactionId") || pm.collectionVariables.get("accountTransactionId");
+    let snapshotRaw = sentAccountTransactionId
+        ? pm.collectionVariables.get("snapshot_" + sentAccountTransactionId)
+        : null;
+
+    if (snapshotRaw) {
+        let snap = JSON.parse(snapshotRaw);
+
+        pm.test("ledger entry amount matches the original transaction's amount", function () {
+            pm.expect(parseFloat(entryA.amount.amount)).to.eql(parseFloat(snap.amount));
+        });
+
+        pm.test("ledger entry currencyCode matches the original transaction's currencyCode", function () {
+            pm.expect(entryA.amount.currencyCode).to.eql(snap.currencyCode);
+        });
+
+        pm.test("ledger entry details matches the original transaction's details", function () {
+            pm.expect(entryA.details).to.eql(snap.details);
+            pm.expect(entryB.details).to.eql(snap.details);
+        });
+    }
+})();
+

@@ -1,30 +1,33 @@
 // fixtures/index.ts
 import { test as base, expect } from '@playwright/test';
-import { AuthFlow }     from '../flows/AuthFlow';
+import { AuthFlow } from '../flows/AuthFlow';
 import { CheckoutFlow } from '../flows/CheckoutFlow';
-import { AuthApiFlow }  from '../flows/AuthApiFlow';
-import { LoginPage }    from '../pages/LoginPage';
+import { AuthApiFlow } from '../flows/AuthApiFlow';
+import { LoginPage } from '../pages/LoginPage';
 import { InventoryPage } from '../pages/InventoryPage';
 import { CheckoutPage } from '../pages/CheckoutPage';
-import { InternetLoginFlow }    from '../flows/internet/InternetLoginFlow';
+import { InternetLoginFlow } from '../flows/internet/InternetLoginFlow';
 import { InternetCheckboxFlows } from '../flows/internet/InternetCheckboxFlows';
 import { InternetDropdownFlows } from '../flows/internet/InternetDropdownFlows';
 import { InternetJSAlertsFlows } from '../flows/internet/InternetJSAlertsFlows';
 import { InternetWindowsPageFlows } from '../flows/internet/InternetWindowPageFlows';
 import { InternetFileUploadPageFlows } from '../flows/internet/InternetFileUploadPageFlows';
 import { InternetNetworkInterceptionFlow } from '../flows/internet/InternetNetworkInterceptionFlow';
-
+import { TuumAuthFlow } from '../flows/tuumbackoffice/TuumAuthFlow';
+import { TuumNotificationFlow } from '../flows/tuumbackoffice/TuumNotificationFlow';
+import { PostLedgerEntryFlow } from '../flows/tuum/PostLedgerEntryFlow';
+import { CreatePersonAndAccountFlow } from '../flows/tuum/CreatePersonAndAccountFlow';
 
 // ─── Fixture type definitions ─────────────────────────────────
 
 type UiPages = {
-  loginPage:     LoginPage;
+  loginPage: LoginPage;
   inventoryPage: InventoryPage;
-  checkoutPage:  CheckoutPage;
+  checkoutPage: CheckoutPage;
 };
 
 type UiFlows = {
-  auth:     AuthFlow;
+  auth: AuthFlow;
   checkout: CheckoutFlow;
 };
 
@@ -33,39 +36,50 @@ type ApiFlows = {
 };
 
 type InternetFlows = {
-  login : InternetLoginFlow;
-  checkbox : InternetCheckboxFlows;
-  dropDownBox : InternetDropdownFlows;
-  JSAlert : InternetJSAlertsFlows;
-  newWindowPage : InternetWindowsPageFlows;
-  fileUploadPage : InternetFileUploadPageFlows;
-  networkInterception: InternetNetworkInterceptionFlow; 
+  login: InternetLoginFlow;
+  checkbox: InternetCheckboxFlows;
+  dropDownBox: InternetDropdownFlows;
+  JSAlert: InternetJSAlertsFlows;
+  newWindowPage: InternetWindowsPageFlows;
+  fileUploadPage: InternetFileUploadPageFlows;
+  networkInterception: InternetNetworkInterceptionFlow;
+};
+
+type TuumFlows = {
+  auth: TuumAuthFlow;
+  notifications: TuumNotificationFlow;
+};
+
+type TuumApiFlows = {
+  ledgerEntry: PostLedgerEntryFlow;
+  createPersonAccount: CreatePersonAndAccountFlow;
 };
 
 type MyFixtures = {
-  uiPages:  UiPages;
-  uiFlows:  UiFlows;
+  uiPages: UiPages;
+  uiFlows: UiFlows;
   apiFlows: ApiFlows;
-  internetFlows : InternetFlows;
+  internetFlows: InternetFlows;
+  tuumFlows: TuumFlows;
+  tuumApiFlows: TuumApiFlows;
 };
 
 // ─── Extended test with custom fixtures ───────────────────────
 
 export const test = base.extend<MyFixtures>({
-
   // ─── Page objects composite ─────────────────────────────
   uiPages: async ({ page }, use) => {
     await use({
-      loginPage:     new LoginPage(page),
+      loginPage: new LoginPage(page),
       inventoryPage: new InventoryPage(page),
-      checkoutPage:  new CheckoutPage(page),
+      checkoutPage: new CheckoutPage(page),
     });
   },
 
   // ─── UI flows composite ──────────────────────────────────
   uiFlows: async ({ page }, use) => {
     await use({
-      auth:     new AuthFlow(page),
+      auth: new AuthFlow(page),
       checkout: new CheckoutFlow(page),
     });
   },
@@ -77,19 +91,31 @@ export const test = base.extend<MyFixtures>({
     });
   },
 
-  internetFlows: async ({page, context}, use) =>{
+  internetFlows: async ({ page, context }, use) => {
     await use({
-      login : new InternetLoginFlow(page),
-      checkbox : new InternetCheckboxFlows(page),
-      dropDownBox : new InternetDropdownFlows(page),
-      JSAlert : new InternetJSAlertsFlows(page),
-      newWindowPage : new InternetWindowsPageFlows(page,context),
+      login: new InternetLoginFlow(page),
+      checkbox: new InternetCheckboxFlows(page),
+      dropDownBox: new InternetDropdownFlows(page),
+      JSAlert: new InternetJSAlertsFlows(page),
+      newWindowPage: new InternetWindowsPageFlows(page, context),
       fileUploadPage: new InternetFileUploadPageFlows(page),
-      networkInterception : new InternetNetworkInterceptionFlow(page),
-      
+      networkInterception: new InternetNetworkInterceptionFlow(page),
     });
   },
 
+  tuumFlows: async ({ page }, use) => {
+    await use({
+      auth: new TuumAuthFlow(page),
+      notifications: new TuumNotificationFlow(page),
+    });
+  },
+
+  tuumApiFlows: async ({ request }, use) => {
+    await use({
+      ledgerEntry: new PostLedgerEntryFlow(request),
+      createPersonAccount: new CreatePersonAndAccountFlow(request),
+    });
+  },
 });
 
 // ─── Re-export expect so tests only import from fixtures ──────

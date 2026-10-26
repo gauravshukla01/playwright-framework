@@ -1,0 +1,250 @@
+[
+  {
+    "id": "NEG-01",
+    "description": "Missing personTypeCode returns validation error",
+    "requestBody": {
+      "name": "FR-A1 Validation Test Person",
+      "tradingName": "FR-A1 Validation Test Person",
+      "identificationNumbers": [
+        {
+          "idNumber": "VAL-TEST-1",
+          "idCountryCode": "GB",
+          "primary": true
+        }
+      ],
+      "addresses": [
+        {
+          "structured": true,
+          "addressTypeCode": "R",
+          "streetName": "Watson Street",
+          "buildingNumber": "85",
+          "cityCounty": "London",
+          "countryCode": "GB",
+          "zip": "E17HX"
+        }
+      ]
+    },
+    "expected": {
+      "status": 400,
+      "code": "err.personTypeMissing",
+      "message": "Add person type."
+    }
+  },
+  {
+    "id": "NEG-02",
+    "description": "Missing name returns validation error",
+    "requestBody": {
+      "personTypeCode": "L",
+      "tradingName": "FR-A1 Validation Test Person",
+      "identificationNumbers": [
+        {
+          "idNumber": "VAL-TEST-2",
+          "idCountryCode": "GB",
+          "primary": true
+        }
+      ],
+      "addresses": [
+        {
+          "structured": true,
+          "addressTypeCode": "R",
+          "streetName": "Watson Street",
+          "buildingNumber": "85",
+          "cityCounty": "London",
+          "countryCode": "GB",
+          "zip": "E17HX"
+        }
+      ]
+    },
+    "expected": {
+      "status": 400,
+      "code": "err.personNameMissing",
+      "message": "Add name for the person."
+    }
+  },
+  {
+    "id": "NEG-03",
+    "description": "Missing idNumber returns validation error",
+    "requestBody": {
+      "personTypeCode": "L",
+      "name": "FR-A1 Validation Test Person",
+      "tradingName": "FR-A1 Validation Test Person",
+      "identificationNumbers": [
+        {
+          "idCountryCode": "GB",
+          "primary": true
+        }
+      ],
+      "addresses": [
+        {
+          "structured": true,
+          "addressTypeCode": "R",
+          "streetName": "Watson Street",
+          "buildingNumber": "85",
+          "cityCounty": "London",
+          "countryCode": "GB",
+          "zip": "E17HX"
+        }
+      ]
+    },
+    "expected": {
+      "status": 400,
+      "code": "err.idNumberMissing",
+      "message": "Add ID number."
+    }
+  },
+  {
+    "id": "NEG-04",
+    "description": "Missing idCountryCode returns validation error",
+    "requestBody": {
+      "personTypeCode": "L",
+      "name": "FR-A1 Validation Test Person",
+      "tradingName": "FR-A1 Validation Test Person",
+      "identificationNumbers": [
+        {
+          "idNumber": "VAL-TEST-4",
+          "primary": true
+        }
+      ],
+      "addresses": [
+        {
+          "structured": true,
+          "addressTypeCode": "R",
+          "streetName": "Watson Street",
+          "buildingNumber": "85",
+          "cityCounty": "London",
+          "countryCode": "GB",
+          "zip": "E17HX"
+        }
+      ]
+    },
+    "expected": {
+      "status": 400,
+      "code": "err.idNumberCountryMissing",
+      "message": "Add country for the ID number."
+    }
+  },
+  {
+    "id": "NEG-05",
+    "description": "Missing addressTypeCode returns validation error",
+    "requestBody": {
+      "personTypeCode": "L",
+      "name": "FR-A1 Validation Test Person",
+      "tradingName": "FR-A1 Validation Test Person",
+      "identificationNumbers": [
+        {
+          "idNumber": "VAL-TEST-5",
+          "idCountryCode": "GB",
+          "primary": true
+        }
+      ],
+      "addresses": [
+        {
+          "structured": true,
+          "streetName": "Watson Street",
+          "buildingNumber": "85",
+          "cityCounty": "London",
+          "countryCode": "GB",
+          "zip": "E17HX"
+        }
+      ]
+    },
+    "expected": {
+      "status": 400,
+      "code": "err.addressTypeMissing",
+      "message": "Add address type."
+    }
+  },
+  {
+    "id": "NEG-06",
+    "description": "Missing streetName returns validation error",
+    "requestBody": {
+      "personTypeCode": "L",
+      "name": "FR-A1 Validation Test Person",
+      "tradingName": "FR-A1 Validation Test Person",
+      "identificationNumbers": [
+        {
+          "idNumber": "VAL-TEST-6",
+          "idCountryCode": "GB",
+          "primary": true
+        }
+      ],
+      "addresses": [
+        {
+          "structured": true,
+          "addressTypeCode": "R",
+          "buildingNumber": "85",
+          "cityCounty": "London",
+          "countryCode": "GB",
+          "zip": "E17HX"
+        }
+      ]
+    },
+    "expected": {
+      "status": 400,
+      "code": "err.addressStreetNameMissing",
+      "message": "Please fill in the street name for a structured address."
+    }
+  },
+  {
+    "id": "NEG-07",
+    "description": "Missing buildingNumber returns validation error",
+    "requestBody": {
+      "personTypeCode": "L",
+      "name": "FR-A1 Validation Test Person",
+      "tradingName": "FR-A1 Validation Test Person",
+      "identificationNumbers": [
+        {
+          "idNumber": "VAL-TEST-7",
+          "idCountryCode": "GB",
+          "primary": true
+        }
+      ],
+      "addresses": [
+        {
+          "structured": true,
+          "addressTypeCode": "R",
+          "streetName": "Watson Street",
+          "cityCounty": "London",
+          "countryCode": "GB",
+          "zip": "E17HX"
+        }
+      ]
+    },
+    "expected": {
+      "status": 400,
+      "code": "err.addressBuildingNumberMissing",
+      "message": "Please fill in the building number name for a structured address."
+    }
+  },
+  {
+    "id": "NEG-08",
+    "description": "Missing cityCounty returns validation error",
+    "requestBody": {
+      "personTypeCode": "L",
+      "name": "FR-A1 Validation Test Person",
+      "tradingName": "FR-A1 Validation Test Person",
+      "identificationNumbers": [
+        {
+          "idNumber": "VAL-TEST-8",
+          "idCountryCode": "GB",
+          "primary": true
+        }
+      ],
+      "addresses": [
+        {
+          "structured": true,
+          "addressTypeCode": "R",
+          "streetName": "Watson Street",
+          "buildingNumber": "85",
+          "countryCode": "GB",
+          "zip": "E17HX"
+        }
+      ]
+    },
+    "expected": {
+      "status": 400,
+      "code": "err.addressCityCountyMissing",
+      "message": "Please fill in the county, town or municipality.."
+    }
+  }
+]

@@ -1,0 +1,52 @@
+[
+  {
+    "description": "Post USD outgoing funds and view transaction details",
+    "personId": "ID-1044",
+    "accountId": "ID-1042",
+    "transaction": {
+      "transactionTypeCode": "EXT_DEPOSIT",
+      "money": {
+        "amount": 2000,
+        "currencyCode": "USD"
+      },
+      "details": "custom credit transaction",
+      "source": {
+        "sourceName": "CARD_CREDIT",
+        "sourceRef": "ID-181262"
+      },
+      "paymentServiceProviderCode": "TUUM",
+      "labels": ["ACC_VIRTUAL"],
+      "applyFee": false
+    },
+    "expected": {
+      "accountId": "ID-1042",
+      "amount": 2000,
+      "currencyCode": "USD"
+    }
+  },
+  {
+    "description": "Post a second USD outgoing funds transaction with a different amount",
+    "personId": "ID-1044",
+    "accountId": "ID-1064",
+    "transaction": {
+      "transactionTypeCode": "EXT_DEPOSIT",
+      "money": {
+        "amount": 3500,
+        "currencyCode": "USD"
+      },
+      "details": "custom credit transaction",
+      "source": {
+        "sourceName": "CARD_CREDIT",
+        "sourceRef": "ID-181262"
+      },
+      "paymentServiceProviderCode": "TUUM",
+      "labels": ["ACC_VIRTUAL"],
+      "applyFee": false
+    },
+    "expected": {
+      "accountId": "ID-1064",
+      "amount": 3500,
+      "currencyCode": "USD"
+    }
+  }
+]
