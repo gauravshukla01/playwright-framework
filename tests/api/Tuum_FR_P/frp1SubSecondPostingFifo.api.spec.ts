@@ -16,7 +16,9 @@ import {
 import { getFrp1Scenarios } from '../../../data/tuumFrp1Data';
 import { CreateTransactionRequest } from '../../../api/tuum/AccountApiClient';
 
-// Serial: TC1 and TC2 post against the same account (ID-1042) and each
+// Order follows the scenarios JSON: the deposit (TC2) runs before the debit
+// (TC1) so a freshly funded account doesn't fail TC1 on insufficient funds.
+// Serial: TC1 and TC2 post against the same account and each
 // reconciles the balance against its own initialBalanceAmount — running
 // them in parallel workers lets one test's transaction land in between the
 // other's create-transaction and balance-check, skewing the expected delta.
@@ -34,7 +36,8 @@ test.describe.serial(
           description:
             'FRP1: posts a single transaction (debit or credit) and verifies it end-to-end ' +
             'across account-api (create + view) and finance-api (the posted double-entry ' +
-            'ledger pair), including that the account balance reconciles against the ' +
+            'ledger pair, posted to the GL accounts expected for its transaction type code), ' +
+            'including that the account balance reconciles against the ' +
             "transaction's own initialBalanceAmount.",
           severity: 'critical',
           feature: Features.TUUM_LEDGER_ENTRY,
@@ -62,19 +65,18 @@ test.describe.serial(
           // this exact requestBody — the one asserted against below — is
           // what's actually sent; otherwise the flow's internal defaulting
           // would silently diverge from what this test thinks it sent.
-          // Computed at runtime (same approach the source Postman collection's
-          // pre-request script used: new Date().toISOString().split('T')[0]).
-          // NOTE: this sandbox's clock runs ahead of (and faster than) real
-          // time, so this can in principle still hit err.valueDateTooEarlyByRules
-          // if the drift is large enough — accepted deliberately for TC1/TC2
-          // to match Postman's behavior exactly rather than omitting valueDate.
-          const todayDate = new Date().toISOString().split('T')[0];
+          // valueDate = today (UTC, sender's clock) via the shared
+          // flow.todayUtc(), the same rule FRP2/FRP3 use (matches the
+          // collection-level todayDate pre-request script). Tuum rejects it if
+          // it's before the account's activationDate
+          // (err.valueDateBeforeAccountActivationDate) or too far behind its
+          // own business date (err.valueDateTooEarlyByRules).
           const requestBody: CreateTransactionRequest = {
             ...transaction,
             source: { ...transaction.source!, sourceRef },
             referenceNumber: randomUUID(),
             uniqueIdentifier: randomUUID(),
-            valueDate: todayDate,
+            valueDate: flow.todayUtc(),
             // Sent (as the source collection does with {{$isoTimestamp}}) so
             // the create check can assert the echo matches what was sent.
             transactionDTime: flow.nowIso(),
@@ -112,7 +114,12 @@ test.describe.serial(
             amount: transaction.money.amount,
             currencyCode: transaction.money.currencyCode,
           });
-          await logValues({ transactionId, accountId, ...expected, ...transaction.money });
+          await logValues({
+            transactionId,
+            accountId,
+            directionCode: expected.directionCode,
+            ...transaction.money,
+          });
           await logAttachment('Transaction details response', response.data);
         });
 
@@ -139,22 +146,29 @@ test.describe.serial(
           await logAttachment('Account balances response', response.data);
         });
 
-        await step('Fetch finance-api ledger entries for the transaction', async () => {
-          const response = await flow.waitForLedgerEntries(transactionId, {
-            transactionCreatedDTime: createdTransaction.createdDTime,
-          });
-          flow.assertLedgerEntries(response, transactionId, {
-            amount: transaction.money.amount,
-            currencyCode: transaction.money.currencyCode,
-            details: createdTransaction.details ?? null,
-          });
-          await logValues({
-            transactionId,
-            expectedAmount: transaction.money.amount,
-            expectedCurrencyCode: transaction.money.currencyCode,
-          });
-          await logAttachment('Finance ledger entries response', response.data);
-        });
+        await step(
+          'Fetch finance-api ledger entries for the transaction (amounts + GL accounts)',
+          async () => {
+            const response = await flow.waitForLedgerEntries(transactionId, {
+              transactionCreatedDTime: createdTransaction.createdDTime,
+            });
+            flow.assertLedgerEntries(response, transactionId, {
+              amount: transaction.money.amount,
+              currencyCode: transaction.money.currencyCode,
+              details: createdTransaction.details ?? null,
+              glAccounts: expected.ledger,
+            });
+            await logValues({
+              transactionId,
+              entries: response.data?.length,
+              expectedAmount: transaction.money.amount,
+              expectedCurrencyCode: transaction.money.currencyCode,
+              expectedDebitGl: expected.ledger.debit.accountCode,
+              expectedCreditGl: expected.ledger.credit.accountCode,
+            });
+            await logAttachment('Finance ledger entries response', response.data);
+          },
+        );
       });
     }
   },

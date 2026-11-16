@@ -1,0 +1,1500 @@
+{
+  "info": {
+    "name": "CAGM Inbound SWIFT - Stub Test Pack (T01-T25)",
+    "description": "Triggers for STUB-SWIFTGW via POST /api/run/event. Config lives in collection variables (cfg*). Fresh IDs are generated per run by the collection pre-request script. Run T21 and T22 immediately after T01.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "cfgReceiverBic",
+      "value": "CAGMAEAAXXX"
+    },
+    {
+      "key": "cfgWrongBic",
+      "value": "CABLGB2LXXX"
+    },
+    {
+      "key": "cfgCreditorAcct",
+      "value": "CAGM00010000"
+    },
+    {
+      "key": "cfgCcy",
+      "value": "USD"
+    },
+    {
+      "key": "cfgAmount",
+      "value": "25000.00"
+    },
+    {
+      "key": "cfgChrgBr",
+      "value": "SHAR"
+    },
+    {
+      "key": "cfgDebtorName",
+      "value": "ABC CORPORATION"
+    },
+    {
+      "key": "cfgRemittance",
+      "value": "INVOICE 2026-0457"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection pre-request: snapshot previous run, reset to central config, generate fresh IDs",
+          "const cv = pm.collectionVariables;",
+          "const KEYS = [\"eventId\", \"correlationId\", \"paymentId\", \"uetr\", \"endToEndId\", \"instructionId\", \"messageId\", \"occurredAt\", \"creDtTm\", \"settlementDate\", \"amount\", \"ccy\", \"chrgBr\", \"debtorName\", \"creditorAcct\", \"receiverBic\", \"remittance\"];",
+          "KEYS.forEach(k => { const v = cv.get(k); if (v !== undefined && v !== null) cv.set('prev_' + k, v); });",
+          "const now = new Date();",
+          "const pad = (n, l = 2) => String(n).padStart(l, '0');",
+          "const d = now.getUTCFullYear() + pad(now.getUTCMonth() + 1) + pad(now.getUTCDate());",
+          "const t = pad(now.getUTCHours()) + pad(now.getUTCMinutes()) + pad(now.getUTCSeconds()) + pad(now.getUTCMilliseconds(), 3);",
+          "cv.set('eventId', pm.variables.replaceIn('{{$guid}}'));",
+          "cv.set('correlationId', pm.variables.replaceIn('{{$guid}}'));",
+          "cv.set('uetr', pm.variables.replaceIn('{{$guid}}'));",
+          "cv.set('paymentId', 'PAY-' + d + '-' + t);",
+          "cv.set('endToEndId', 'E2E-' + t);",
+          "cv.set('instructionId', 'INSTR-' + t);",
+          "cv.set('messageId', 'MSG-' + t);",
+          "cv.set('occurredAt', now.toISOString());",
+          "cv.set('creDtTm', now.toISOString());",
+          "cv.set('settlementDate', now.toISOString().substring(0, 10));",
+          "// scenario values reset to the central config (T01 defaults)",
+          "cv.set('receiverBic', cv.get('cfgReceiverBic'));",
+          "cv.set('creditorAcct', cv.get('cfgCreditorAcct'));",
+          "cv.set('ccy', cv.get('cfgCcy'));",
+          "cv.set('amount', cv.get('cfgAmount'));",
+          "cv.set('chrgBr', cv.get('cfgChrgBr'));",
+          "cv.set('debtorName', cv.get('cfgDebtorName'));",
+          "cv.set('remittance', cv.get('cfgRemittance'));"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1 Happy paths",
+      "item": [
+        {
+          "name": "T01 - Full flow USD SHAR fee 15.00",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: COMPLETED; Dr 25000.00, Cr customer 24985.00, Cr fee 15.00; camt.054; gpi ACSP then ACCC",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** CAGM00010000, USD, SHAR, 25000.00\n\n**Expected:** COMPLETED; Dr 25000.00, Cr customer 24985.00, Cr fee 15.00; camt.054; gpi ACSP then ACCC"
+          }
+        },
+        {
+          "name": "T02 - No fee (DEBT)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["const cv = pm.collectionVariables;", "cv.set('chrgBr','DEBT');"]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: COMPLETED; customer credited 25000.00; no fee",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** As T01 with chrgBr DEBT\n\n**Expected:** COMPLETED; customer credited 25000.00; no fee"
+          }
+        },
+        {
+          "name": "T03 - FX USD to GBP account",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('creditorAcct', 'CAGM00010005');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: COMPLETED; 19587.50 GBP gross, less fee (confirm fee treatment with Dev)",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Creditor CAGM00010005\n\n**Expected:** COMPLETED; 19587.50 GBP gross, less fee (confirm fee treatment with Dev)"
+          }
+        },
+        {
+          "name": "T07 - Slow account lookup",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('creditorAcct', 'CAGM00010007');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: PENDING then SUCCESS after ~3s; COMPLETED",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Creditor CAGM00010007\n\n**Expected:** PENDING then SUCCESS after ~3s; COMPLETED"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 Account lookup failures",
+      "item": [
+        {
+          "name": "T04 - Account not found",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('creditorAcct', 'CAGM00010001');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: REJECTED; pacs.002 AC01",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Creditor CAGM00010001\n\n**Expected:** REJECTED; pacs.002 AC01"
+          }
+        },
+        {
+          "name": "T05 - Account blocked",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('creditorAcct', 'CAGM00010003');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: REJECTED; pacs.002 AC06",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Creditor CAGM00010003\n\n**Expected:** REJECTED; pacs.002 AC06"
+          }
+        },
+        {
+          "name": "T06 - Account closed",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('creditorAcct', 'CAGM00010004');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: REJECTED; pacs.002 AC04",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Creditor CAGM00010004\n\n**Expected:** REJECTED; pacs.002 AC04"
+          }
+        },
+        {
+          "name": "T08 - Lookup unavailable",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('creditorAcct', 'CAGM00010009');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: REPAIR",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Creditor CAGM00010009\n\n**Expected:** REPAIR"
+          }
+        },
+        {
+          "name": "T23 - Name mismatch",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('creditorAcct', 'CAGM00010008');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: REJECTED; pacs.002 BE01",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Creditor CAGM00010008\n\n**Expected:** REJECTED; pacs.002 BE01"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 Sanctions screening",
+      "item": [
+        {
+          "name": "T09 - HIT RELEASE",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('debtorName','ABC CORPORATION HIT RELEASE');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: Possible hit, released after ~20s; COMPLETED; ACSP only after release",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Debtor name contains HIT RELEASE\n\n**Expected:** Possible hit, released after ~20s; COMPLETED; ACSP only after release"
+          }
+        },
+        {
+          "name": "T10 - HIT SEIZE",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('debtorName','ABC CORPORATION HIT SEIZE');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: SEIZED; funds to sanctions suspense; no ACSP",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Debtor name contains HIT SEIZE\n\n**Expected:** SEIZED; funds to sanctions suspense; no ACSP"
+          }
+        },
+        {
+          "name": "T11 - HIT CANCEL",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('debtorName','ABC CORPORATION HIT CANCEL');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: REJECTED; pacs.002 with neutral reason code",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Debtor name contains HIT CANCEL\n\n**Expected:** REJECTED; pacs.002 with neutral reason code"
+          }
+        },
+        {
+          "name": "T12 - AUTOBLOCK",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('debtorName','ABC CORPORATION AUTOBLOCK');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: REJECTED",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Debtor name contains AUTOBLOCK\n\n**Expected:** REJECTED"
+          }
+        },
+        {
+          "name": "T13 - SCREEN DOWN",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('debtorName','ABC CORPORATION SCREEN DOWN');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: EXCEPTION",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Debtor name contains SCREEN DOWN\n\n**Expected:** EXCEPTION"
+          }
+        },
+        {
+          "name": "T14 - SCREEN INVALID",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('remittance','SCREEN INVALID');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: REPAIR",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Remittance contains SCREEN INVALID\n\n**Expected:** REPAIR"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 Posting FX billing failures",
+      "item": [
+        {
+          "name": "T15 - Ledger rejects posting",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["const cv = pm.collectionVariables;", "cv.set('amount','99999.99');"]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: REPAIR",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Amount 99999.99\n\n**Expected:** REPAIR"
+          }
+        },
+        {
+          "name": "T16 - Ledger fails twice then posts",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["const cv = pm.collectionVariables;", "cv.set('amount','88888.88');"]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: COMPLETED; 3 posting requests, each with different message reference",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Amount 88888.88\n\n**Expected:** COMPLETED; 3 posting requests, each with different message reference"
+          }
+        },
+        {
+          "name": "T17 - Ledger always fails",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["const cv = pm.collectionVariables;", "cv.set('amount','77777.77');"]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: POSTING_EXCEPTION after 3 attempts",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Amount 77777.77\n\n**Expected:** POSTING_EXCEPTION after 3 attempts"
+          }
+        },
+        {
+          "name": "T18 - No FX rate (XAU)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('creditorAcct', 'CAGM00010005');",
+                  "cv.set('ccy','XAU');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: REPAIR",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Currency XAU to GBP account\n\n**Expected:** REPAIR"
+          }
+        },
+        {
+          "name": "T25 - Billing unavailable",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["const cv = pm.collectionVariables;", "cv.set('amount','66666.66');"]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: REPAIR",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Amount 66666.66\n\n**Expected:** REPAIR"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 Validation duplicates SWIFT",
+      "item": [
+        {
+          "name": "T19 - UETR missing",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: REJECTED; pacs.002 FF01",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** uetr field removed from paymentRefs\n\n**Expected:** REJECTED; pacs.002 FF01"
+          }
+        },
+        {
+          "name": "T20 - Wrong receiver BIC",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('receiverBic', cv.get('cfgWrongBic'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: REJECTED; pacs.002 RC01",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** instdAgt/creditorAgent BIC CABLGB2LXXX\n\n**Expected:** REJECTED; pacs.002 RC01"
+          }
+        },
+        {
+          "name": "T21 - Duplicate (same UETR + message ID)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('uetr', cv.get('prev_uetr'));",
+                  "cv.set('messageId', cv.get('prev_messageId'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: REJECTED; pacs.002 AM05; original payment unaffected",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** RUN IMMEDIATELY AFTER T01. Reuses previous UETR and messageId\n\n**Expected:** REJECTED; pacs.002 AM05; original payment unaffected"
+          }
+        },
+        {
+          "name": "T22 - Duplicate delivery (same eventId)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "const KEYS = [\"eventId\", \"correlationId\", \"paymentId\", \"uetr\", \"endToEndId\", \"instructionId\", \"messageId\", \"occurredAt\", \"creDtTm\", \"settlementDate\", \"amount\", \"ccy\", \"chrgBr\", \"debtorName\", \"creditorAcct\", \"receiverBic\", \"remittance\"];",
+                  "KEYS.forEach(k => cv.set(k, cv.get('prev_' + k)));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: Processed only once",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** RUN IMMEDIATELY AFTER T01. Re-publishes the previous message unchanged\n\n**Expected:** Processed only once"
+          }
+        },
+        {
+          "name": "T24 - SWIFT NACK",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cv = pm.collectionVariables;",
+                  "cv.set('paymentId', cv.get('paymentId') + '-NACK');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: DISPATCH_FAILED reported to VolPay",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** Payment ID ends with NACK\n\n**Expected:** DISPATCH_FAILED reported to VolPay"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 Extra cases (not in the 25)",
+      "item": [
+        {
+          "name": "X01 - CRED fee 25.00",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["const cv = pm.collectionVariables;", "cv.set('chrgBr','CRED');"]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: COMPLETED; fee 25.00 (confirm expected customer credit with Dev)",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** chrgBr CRED\n\n**Expected:** COMPLETED; fee 25.00 (confirm expected customer credit with Dev)"
+          }
+        },
+        {
+          "name": "X02 - SLEV no fee",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["const cv = pm.collectionVariables;", "cv.set('chrgBr','SLEV');"]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: COMPLETED; no fee",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** chrgBr SLEV\n\n**Expected:** COMPLETED; no fee"
+          }
+        },
+        {
+          "name": "X03 - Invalid chrgBr",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["const cv = pm.collectionVariables;", "cv.set('chrgBr','XXXX');"]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Expected end result: Defined state expected (REJECTED/REPAIR) - confirm with Dev",
+                  "pm.test('Trigger accepted (2xx)', () => pm.expect(pm.response.code).to.be.within(200, 299));",
+                  "console.log('paymentId=' + pm.collectionVariables.get('paymentId') +",
+                  "            ' correlationId=' + pm.collectionVariables.get('correlationId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"eventType\": \"evt.cagm.swift.payment.received.v1\",\n  \"schemaVersion\": \"1.0\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"source\": \"swift-adapter\",\n  \"tenant\": \"cagm\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"causationId\": null,\n  \"transactionId\": \"{{paymentId}}\",\n  \"paymentRefs\": {\n    \"paymentId\": \"{{paymentId}}\",\n    \"uetr\": \"{{uetr}}\",\n    \"endToEndId\": \"{{endToEndId}}\",\n    \"instructionId\": \"{{instructionId}}\",\n    \"messageId\": \"{{messageId}}\"\n  },\n  \"data\": {\n    \"messageType\": \"pacs.008.001.08\",\n    \"grpHdr\": {\n      \"msgId\": \"{{messageId}}\",\n      \"creDtTm\": \"{{creDtTm}}\",\n      \"nbOfTxs\": 1\n    },\n    \"instgAgt\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"instdAgt\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"sttlmInf\": {\n      \"sttlmMtd\": \"INDA\"\n    },\n    \"pmtTpInf\": {\n      \"svcLvl\": \"G001\"\n    },\n    \"intrBkSttlmAmt\": {\n      \"value\": \"{{amount}}\",\n      \"ccy\": \"{{ccy}}\"\n    },\n    \"intrBkSttlmDt\": \"{{settlementDate}}\",\n    \"chrgBr\": \"{{chrgBr}}\",\n    \"debtor\": {\n      \"name\": \"{{debtorName}}\"\n    },\n    \"debtorAccount\": {\n      \"id\": \"DE89370400440532013000\"\n    },\n    \"debtorAgent\": {\n      \"bic\": \"DEUTDEFFXXX\"\n    },\n    \"creditor\": {\n      \"name\": \"XYZ LTD\"\n    },\n    \"creditorAccount\": {\n      \"id\": \"{{creditorAcct}}\"\n    },\n    \"creditorAgent\": {\n      \"bic\": \"{{receiverBic}}\"\n    },\n    \"rmtInf\": {\n      \"ustrd\": \"{{remittance}}\"\n    },\n    \"objectRef\": \"s3://cagm-swift-inbound/2026/10/16/DEUT20261016-0001.xml\",\n    \"sha256\": \"<sha256>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/run/event",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "run", "event"]
+            },
+            "description": "**Trigger:** chrgBr XXXX\n\n**Expected:** Defined state expected (REJECTED/REPAIR) - confirm with Dev"
+          }
+        }
+      ]
+    }
+  ]
+}

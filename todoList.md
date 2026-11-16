@@ -58,6 +58,30 @@
   `glAccounts: expected.ledger.original` in the specs'
   `assertLedgerEntries()` calls (FRP1 Finance event; FRP2 Finance event1 and
   Finance event2). Best done together with P8.
+  **FRP1 done 2026-11-16:** `frp1SubSecondPostingFifo.scenarios.json` now
+  has `expected.ledger` (flat `{ debit, credit }` — FRP1 has no reversal, so
+  no `original` level), `data/tuumFrp1Data.ts` validates it fail-fast
+  (+ USD-only), and the spec passes `glAccounts: expected.ledger`. Not yet
+  run green (blocked by P12). **FRP2 still open.**
+- **P12 — Env refresh: new person/account IDs needed.** Logged 2026-11-16.
+  cab-dev was refreshed; the hardcoded IDs are stale (ID-1048 shows USD
+  −4,500, its INR balance is gone; the employee password also changed).
+  New values: **accountId ID-1249, personId ID-1256**. FRP1 updated
+  2026-11-16 (deposit now runs before the debit); the rest still to do.
+  Update every scenarios file that uses the old IDs: `personId` ID-1076 / `accountId` ID-1048 in
+  `frp1SubSecondPostingFifo.scenarios.json`,
+  `frp2ExactlyOnceIdempotency.scenarios.json`,
+  `frp2UniqueRequestId.scenarios.json`,
+  `frp3LedgerImmutability.scenarios.json`; ID-1086 in the
+  `postLedgerEntryFifo10/100/200.scenarios.json` files;
+  `postLedgerEntry.scenarios.json` (8 `ID-` values); and any other
+  `testData/tuum` file with an `ID-` value. Re-verify the GL codes
+  (2014000 / 2022000) and the account is funded in USD before re-running.
+- **P13 — Failed API calls don't show the response body in Allure.**
+  Logged 2026-11-16, awaiting user go-ahead. (a) add Tuum `errors` to every
+  status-check message in `PostLedgerEntryFlow`; (b) always attach the
+  response body on a non-2xx, regardless of `ALLURE_LOG_VALUES`; (c) remove
+  the `DEBUG` `console.log` in `AccountApiClient.createTransaction`.
 - **P10 — FRP3 reversal-ledger check duplicates the shared ledger check.**
   Logged 2026-10-21, not started.
   `PostLedgerEntryFlow.assertReversalLedgerMirrorsOriginal()` re-implements
